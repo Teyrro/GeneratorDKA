@@ -1,8 +1,6 @@
 from dataclasses import dataclass, field
 
 from PyQt5.QtWidgets import QWidget, QListWidget, QVBoxLayout
-from pandas import DataFrame
-
 from models.DKA import DKA
 
 
@@ -22,7 +20,7 @@ class CheckChains(QWidget):
             return
         self.dka = dka_model
 
-    def get_info(self, chain: str) -> str:
+    def get_info(self, chain: str) -> str | tuple[str, str]:
         self.list.clear()
         dt = self.dka.dt
         current_state = self.dka.start_state
@@ -35,7 +33,8 @@ class CheckChains(QWidget):
                 item = f"{current_state} {chain[ind:]}"
                 self.list.addItem(item)
             except BaseException:
-                return f"current state: {current_state} don't contain transition - ({current_state},{char}) -> ())"
+                return (f"current state: {current_state} don't "
+                        f"contain transition - ({current_state},{char}) -> ())", "color: red")
         else:
             subchain = f"({current_state},_)"
             chains.append(subchain)
@@ -44,5 +43,5 @@ class CheckChains(QWidget):
             self.list.addItem("->".join(chains))
         if current_state != self.dka.end_state:
             return (f"current state {current_state} isn't final, final state: {self.dka.end_state},"
-                    f" no transition to next state")
-        return f"this chain belong to DKA"
+                    f" no transition to next state", "color: red")
+        return f"this chain belong to DKA", "color: green"

@@ -1,9 +1,9 @@
 import itertools
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from PyQt5 import QtCore
-from PyQt5.QtCore import QSize, Qt, QObject, pyqtSignal, QThread
+from PyQt5.QtCore import QSize, Qt, QObject, pyqtSignal, QThread, QFile, QTextStream
 from PyQt5.QtWidgets import QMainWindow, QApplication, QLineEdit, QWidget, QPushButton, \
     QHBoxLayout, QTabWidget, QVBoxLayout, QLabel, QFormLayout
 
@@ -23,8 +23,10 @@ class MainWidget(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.input: InputView = None
-        self.graph_view: GraphView = None
+        self.worker = None
+        self.thread = None
+        self.input: InputView | None = None
+        self.graph_view: GraphView | None = None
         self.dka_model = DKA()
         self.check_chains = CheckChains()
         self.setMinimumSize(QSize(800, 500))
@@ -39,7 +41,8 @@ class MainWidget(QWidget):
         vbox.addWidget(tabs)
 
         check_info = QLabel("Input data is empty")
-        check_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        check_info.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
         check_info.setObjectName("info")
         vbox.addWidget(check_info)
 
@@ -63,11 +66,14 @@ class MainWidget(QWidget):
     def check_chain(self):
         info: QLabel = self.findChild(QLabel, "info")
         if self.dka_model.dt is None:
-            text = "Input data is empty"
+            text = "I guess, you should generate DKA before click this button"
+            info.setStyleSheet("color: red")
             info.setText(text)
+            return
 
         self.check_chains.set_dka(self.dka_model)
-        text: str = self.check_chains.get_info(self.chain_line.text())
+        text, color = self.check_chains.get_info(self.chain_line.text())
+        info.setStyleSheet(color)
         info.setText(text)
 
     def create_table(self, connect_button=None):
@@ -152,6 +158,10 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    file = QFile(":/dark.qss")
+    file.open(QFile.ReadOnly | QFile.Text)
+    stream = QTextStream(file)
+    app.setStyleSheet(stream.readAll())
     window = MainWindow()
     window.show()
     app.exec()

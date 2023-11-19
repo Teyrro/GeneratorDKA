@@ -129,4 +129,6 @@ class DKA:
 
     @property
     def dt(self):
+        if self._dt is None:
+            return None
         return self._dt.copy(deep=True)

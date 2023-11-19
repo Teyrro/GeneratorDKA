@@ -9,6 +9,7 @@ pyqt5 = "*"
 pyqtwebengine = "*"
 pyqt5-stubs = "*"
 pyvis = "*"
+numpy = "*"
 
 [dev-packages]
 pytest = "*"

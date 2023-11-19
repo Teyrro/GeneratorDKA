@@ -21,84 +21,83 @@ class GraphView(QWidget):
         lay.addWidget(self.m_output)
         self.setLayout(lay)
 
-    @staticmethod
-    def generate_graph(dka: DKA, path: str):
-        G = nx.MultiDiGraph()
-        for i in dka.dt.index:
-            G.add_node(i, label=i)
-
-        for i in dka.dt.index:
-            for j, m in dka.dt.loc[i].to_dict().items():
-                G.add_edge(i, m, label=j, physics=False)
-        # for i in dt[:]
-
-        scale = 10
-        scale *= dka.dt.size
-        pos: dict = nx.circular_layout(G, scale=scale)
-
-        nt = Network(directed=True, bgcolor='#222222', font_color='white')
-        nt.options.edges.smooth.type = "curvedCW"
-        nt.options.edges.smooth.roundness = 0.4
-
-        nG = nx.MultiDiGraph()
-        for i in G.nodes:
-            nG.add_node(i,
-                        lable=i,
-                        shape='circle',
-                        color="blue",
-                        x=pos[i][0],
-                        y=pos[i][1],
-                        physics=True,
-                        )
-        nG.add_node(dka.start_state, color="red")
-        nG.add_node(dka.end_state, color="red")
-        labels = defaultdict(list)
-        columns = {}
-        for ind, it in enumerate(dka.dt.columns):
-            columns[it] = ind
-
-        for j in dka.dt.index:
-            val: dict = dka.dt.loc[j].to_dict()
-            states: list = list(val.values())
-            count = Counter(states)
-            for i in dka.dt.columns:
-                state = val[i]
-                m_state = count[state]
-                if m_state > 1:
-                    labels[(j, state)].append(i)
-                elif m_state == 1:
-                    labels[(j, state)].append(i)
-
-        for i in dka.dt.index:
-            for j, m in dka.dt.loc[i].to_dict().items():
-                nG.add_edge(i,
-                            m,
-                            label=",".join(labels[(i, m)]),
-                            physics=False,
-                            )
-
-        if pyvis._version.__version__ > '0.1.9':
-            nt.from_nx(nG, show_edge_weights=False)
-        else:
-            nt.from_nx(nG)
-        nt.show_buttons(filter_=['physics'])
-        nt.show_buttons()
-        nt.save_graph(path)
-
     @QtCore.pyqtSlot()
     def on_button_clicked(self, dt: DKA):
         filename = "graph.html"
         path = "Widgets/" + filename
-        self.generate_graph(dt, path)
+        generate_graph(dt, path)
         with open(path, "r") as file:
             html: str = file.read()
         self.m_output.setHtml(html, QUrl(path))
 
-# if __name__ == "__main__":
-# import sys
-#
-# app = QApplication(sys.argv)
-# w = GraphView()
-# w.show()
-#
-# sys.exit(app.exec_())
+
+def create_fantom_graph(dka: DKA):
+    g = nx.MultiDiGraph()
+    for i in dka.dt.index:
+        g.add_node(i, label=i)
+
+    for i in dka.dt.index:
+        for j, m in dka.dt.loc[i].to_dict().items():
+            g.add_edge(i, m, label=j, physics=False)
+
+    scale = 10
+    scale *= dka.dt.size
+    pos: dict = nx.circular_layout(g, scale=scale)
+    return g, pos
+
+
+def get_labels(dt):
+    labels = defaultdict(list)
+    for j in dt.index:
+        val: dict = dt.loc[j].to_dict()
+        states: list = list(val.values())
+        count = Counter(states)
+        for i in dt.columns:
+            state = val[i]
+            m_state = count[state]
+            if m_state > 1:
+                labels[(j, state)].append(i)
+            elif m_state == 1:
+                labels[(j, state)].append(i)
+    return labels
+
+
+def generate_graph(dka: DKA, path: str):
+    g, pos = create_fantom_graph(dka)
+
+    nt = Network(directed=True, bgcolor='#222222', font_color='white')
+    nt.options.edges.smooth.type = "curvedCW"
+    nt.options.edges.smooth.roundness = 0.4
+
+    n_g = nx.MultiDiGraph()
+    for i in g.nodes:
+        n_g.add_node(i,
+                    lable=i,
+                    shape='circle',
+                    color="blue",
+                    x=pos[i][0],
+                    y=pos[i][1],
+                    physics=True,
+                    )
+    n_g.add_node(dka.start_state, color="red")
+    n_g.add_node(dka.end_state, color="red")
+    columns = {}
+    for ind, it in enumerate(dka.dt.columns):
+        columns[it] = ind
+
+    labels = get_labels(dka.dt)
+    for i in dka.dt.index:
+        for j, m in dka.dt.loc[i].to_dict().items():
+            n_g.add_edge(i,
+                        m,
+                        label=",".join(labels[(i, m)]),
+                        physics=False,
+                        )
+
+    if pyvis._version.__version__ > '0.1.9':
+        nt.from_nx(n_g, show_edge_weights=False)
+    else:
+        nt.from_nx(n_g)
+    nt.show_buttons(filter_=['physics'])
+    nt.show_buttons()
+    nt.save_graph(path)
