@@ -26,27 +26,42 @@ def add_edge(dt: DataFrame, start_state: str, end_state: str, name_edge: str):
 
 
 class DKA(QObject):
+    """
+    DKA model, generate dka by alphabet setting
+    """
 
-    def __init__(self, parent):
+    def __init__(self, parent, access_sym=None, subchain=None, multiplicity=None):
         super().__init__(parent)
-        self.access_sym: str | None = None
-        self.subchain: str | None = None
-        self.multiplicity: int | None = None
+        self.set_info(access_sym, subchain, multiplicity)
         self.m_name: str | None = None
         self.start_state: str | None = None
         self.end_state: str | None = None
         self._dt: DataFrame | None = None
 
     def set_info(self, symbols: str, subchain: str = "", multiplicity: str = "1"):
-        self.access_sym = symbols
-        self.subchain = subchain
-        self.multiplicity = int(multiplicity)
+        """
+        Set up params
+        :param symbols:
+        :param subchain:
+        :param multiplicity:
+        :return: None
+        """
+        self.access_sym: str | None = symbols
+        self.subchain: str | None = subchain
+        self.multiplicity: int | None = int(multiplicity)
         if self.multiplicity == 1:
             self.m_name = "one"
             return
         self.m_name = "multi"
 
-    def generate_background_part(self, dt, name: str, mult):
+    def generate_background_part(self, dt: DataFrame, name: str, mult: int) -> None:
+        """
+        Generate nodes circulant subgraph
+        :param dt:
+        :param name:
+        :param mult:
+        :return: None
+        """
         for i in range(0, -mult, -1):
             if i == 0:
                 ss = name + str(-mult)
@@ -59,7 +74,13 @@ class DKA(QObject):
             for char in self.access_sym:
                 add_edge(dt, ss, es, char)
 
-    def create_dt(self, name_state: str, mult: int):
+    def create_dt(self, name_state: str, mult: int) -> DataFrame:
+        """
+        Create table with columns and indexes
+        :param name_state:
+        :param mult:
+        :return: DataFrame
+        """
         def count_state(m, subchain_size):
             l: list[int] = []
             if m == 0:
@@ -81,7 +102,14 @@ class DKA(QObject):
             start_pos += i
         return DataFrame("", states, list(self.access_sym))
 
-    def create_dka(self):
+    def create_dka(self) -> None:
+        """
+        Generate dka. In loop generate branches, every iteration is branch
+        with nodes count == max(subchain_size, mult)
+        (iteration count == len(multiplicity))
+
+        :return: None
+        """
         name = "q"
 
         mult: int = int(self.multiplicity)
@@ -110,7 +138,18 @@ class DKA(QObject):
         self._dt = dt
 
     def generate_other_ways(self, dt: DataFrame, name: str, num_branch: int,
-                            subchain_size: int, branch_size: int):
+                            subchain_size: int, branch_size: int) -> None:
+        """
+        Other ways are computed depends on number in branch % subchain * branch_size
+        almost to all case. If current char isn't first in subchain, example above suit us
+        other functions in \'get_compute_one\', \'get_compute_multi\'
+        :param dt:
+        :param name:
+        :param num_branch:
+        :param subchain_size:
+        :param branch_size:
+        :return:  None
+        """
         if subchain_size == 0:
             return
 
@@ -132,7 +171,17 @@ class DKA(QObject):
                     add_edge(dt, ss, es, cur_char)
 
     def generate_subchain_part(self, dt: DataFrame, number_branch: int,
-                               offset: int, name: str, subchain_size: int):
+                               offset: int, name: str, subchain_size: int) -> None:
+        """
+        Generates relates between nodes of subchain, only main relates.
+        Offset == subchain size * number branch
+        :param dt:
+        :param number_branch:
+        :param offset:
+        :param name:
+        :param subchain_size:
+        :return: None
+        """
         for ind, it in enumerate(self.subchain):
             index = ind + offset
             ss = name + str(index)
