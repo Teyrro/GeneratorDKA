@@ -16,19 +16,19 @@ from models.DKA import DKA
 from models.DataFrameModel import DataFrameModel
 
 
-@dataclass
 class MainWidget(QWidget):
-    table_view = None
-    graph_view = None
 
     def __init__(self):
         super().__init__()
         self.worker = None
         self.thread = None
+        self.check_chains = None
+        self.table_view = None
         self.input: InputView | None = None
         self.graph_view: GraphView | None = None
-        self.dka_model = DKA()
-        self.check_chains = CheckChains()
+        self.dka_model = DKA(self)
+        self.dka_model.setObjectName("DKA")
+
         self.setMinimumSize(QSize(800, 500))
         lay = QHBoxLayout()
         lay.addWidget(self.create_header())
@@ -37,7 +37,7 @@ class MainWidget(QWidget):
         tabs = QTabWidget()
         tabs.addTab(self.create_graph(), "Graph")
         tabs.addTab(self.create_table(), "Table")
-        tabs.addTab(self.check_chains, "Chains")
+        tabs.addTab(self.create_check_chains(), "Chains")
         vbox.addWidget(tabs)
 
         check_info = QLabel("Input data is empty")
@@ -76,6 +76,11 @@ class MainWidget(QWidget):
         info.setStyleSheet(color)
         info.setText(text)
 
+    def create_check_chains(self):
+        self.check_chains = CheckChains()
+        self.check_chains.setObjectName("check_chains")
+        return self.check_chains
+
     def create_table(self, connect_button=None):
         table = TableView(self)
         table.setObjectName("tableView")
@@ -84,10 +89,12 @@ class MainWidget(QWidget):
 
     def create_graph(self):
         self.graph_view = GraphView(self)
+        self.graph_view.setObjectName("graph_view")
         return self.graph_view
 
     def create_header(self):
         self.input = InputView(self)
+        self.input.setObjectName("header")
         return self.input
 
     @QtCore.pyqtSlot()
@@ -125,11 +132,11 @@ class MainWidget(QWidget):
             lambda: button.setEnabled(True)
         )
 
-        info: QLabel = self.input.findChild(QLabel, "log_dka")
-        info.setText("dka generation")
-        self.thread.finished.connect(
-            lambda: info.setText("")
-        )
+        # info: QLabel = self.input.findChild(QLabel, "log_dka")
+        # info.setText("dka generation")
+        # self.thread.finished.connect(
+        #     lambda: info.setText("")
+        # )
 
     class Worker(QObject):
         def __init__(self, parent=None, func=None):

@@ -1,21 +1,50 @@
-from dataclasses import dataclass, field
-
+from PyQt5.QtCore import QObject
 from pandas import DataFrame
 
 
-@dataclass
-class DKA:
-    access_sym: str = field(default=None, init=False)
-    subchain: str = field(default=None, init=False)
-    multiplicity: int = field(default=None, init=False)
-    start_state: str = field(default=None, init=False)
-    end_state: str = field(default=None, init=False)
-    _dt: DataFrame = field(default=None, init=False)
+def get_compute_multi():
+    return (lambda *argc: ((argc[0] + argc[1]) % argc[2]) * argc[3] + 1,
+            lambda *argc: ((argc[0] + 1 + argc[1]) % argc[2]) * argc[3])
+
+
+def get_compute_one():
+    return (lambda *argc: 1,
+            lambda *argc: 0)
+
+
+def get_compute_func(m):
+    m_funcs = {
+        "one": get_compute_one,
+        "multi": get_compute_multi
+    }
+    return m_funcs[m]()
+
+
+def add_edge(dt: DataFrame, start_state: str, end_state: str, name_edge: str):
+    if dt[name_edge][start_state] == "":
+        dt[name_edge][start_state] = end_state
+
+
+class DKA(QObject):
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.access_sym: str | None = None
+        self.subchain: str | None = None
+        self.multiplicity: int | None = None
+        self.m_name: str | None = None
+        self.start_state: str | None = None
+        self.end_state: str | None = None
+        self._dt: DataFrame | None = None
 
     def set_info(self, symbols: str, subchain: str = "", multiplicity: str = "1"):
         self.access_sym = symbols
         self.subchain = subchain
         self.multiplicity = int(multiplicity)
+        if self.multiplicity == 1:
+            self.m_name = "one"
+            return
+        self.m_name = "multi"
 
     def generate_background_part(self, dt, name: str, mult):
         for i in range(0, -mult, -1):
@@ -28,7 +57,7 @@ class DKA:
             else:
                 es = name + str(i - 1)
             for char in self.access_sym:
-                self.add_edge(dt, ss, es, char)
+                add_edge(dt, ss, es, char)
 
     def create_dt(self, name_state: str, mult: int):
         def count_state(m, subchain_size):
@@ -79,39 +108,28 @@ class DKA:
 
         print(dt)
         self._dt = dt
-        # return dt.copy(deep=True)
-
-    @staticmethod
-    def add_edge(dt: DataFrame, start_state: str, end_state: str, name_edge: str):
-        if dt[name_edge][start_state] == "":
-            dt[name_edge][start_state] = end_state
 
     def generate_other_ways(self, dt: DataFrame, name: str, num_branch: int,
                             subchain_size: int, branch_size: int):
+        if subchain_size == 0:
+            return
 
-        get_ind_if_a = lambda *argc: ((argc[0] + argc[1]) % argc[2]) * argc[3] + 1
-        get_ind_if_other = lambda *argc: ((argc[0] + 1 + argc[1]) % argc[2]) * argc[3]
-        if self.multiplicity == 1 and subchain_size > 0:
-            get_ind_if_a = lambda *argc: 1
-            get_ind_if_other = lambda *argc: 0
-
+        compute_func: tuple = get_compute_func(self.m_name)
+        start_char: str = self.subchain[0]
         for i in range(subchain_size):
             index = i + num_branch * subchain_size
             state_name = name + str(index)
-            for j in self.access_sym:
-                if dt[j][state_name] == "":
-
-                    if self.subchain[0] == j:
-                        ind = get_ind_if_a(i, num_branch, self.multiplicity, subchain_size)
-                    else:
-                        ind = get_ind_if_other(i, num_branch, self.multiplicity, subchain_size)
-
+            for cur_char in self.access_sym:
+                if dt[cur_char][state_name] == "":
+                    check_neq = cur_char != start_char
+                    get_ind = compute_func[check_neq]
+                    ind = get_ind(i, num_branch, self.multiplicity, subchain_size)
                     ss = state_name
                     es = name + str(ind)
                     print(f"start_state: {state_name} to: {es}\n"
                           f"i: {i}, num_branch: {num_branch}, branch: {branch_size}, subchain: {subchain_size}"
                           f"ind: {ind}")
-                    self.add_edge(dt, ss, es, j)
+                    add_edge(dt, ss, es, cur_char)
 
     def generate_subchain_part(self, dt: DataFrame, number_branch: int,
                                offset: int, name: str, subchain_size: int):
@@ -125,10 +143,10 @@ class DKA:
                 if index == 0:
                     index += int(self.multiplicity)
                 es = name + str(-index)
-            self.add_edge(dt, ss, es, it)
+            add_edge(dt, ss, es, it)
 
     @property
-    def dt(self):
+    def dt(self) -> DataFrame | None:
         if self._dt is None:
             return None
         return self._dt.copy(deep=True)

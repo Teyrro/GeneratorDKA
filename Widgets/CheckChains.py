@@ -4,12 +4,11 @@ from PyQt5.QtWidgets import QWidget, QListWidget, QVBoxLayout
 from models.DKA import DKA
 
 
-@dataclass
 class CheckChains(QWidget):
-    dka: DKA = field(default=None, init=False)
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.dka: DKA | None = None
         self.list: QListWidget = QListWidget()
         vbox = QVBoxLayout()
         vbox.addWidget(self.list)
