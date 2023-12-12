@@ -65,20 +65,21 @@ def get_labels(dt):
 def generate_graph(dka: DKA, path: str):
     g, pos = create_fantom_graph(dka)
 
-    nt = Network(directed=True, bgcolor='#222222', font_color='white')
+    nt = Network(directed=True, bgcolor="#222222", font_color="white")
     nt.options.edges.smooth.type = "curvedCW"
     nt.options.edges.smooth.roundness = 0.4
 
     n_g = nx.MultiDiGraph()
     for i in g.nodes:
-        n_g.add_node(i,
-                    lable=i,
-                    shape='circle',
-                    color="blue",
-                    x=pos[i][0],
-                    y=pos[i][1],
-                    physics=True,
-                    )
+        n_g.add_node(
+            i,
+            lable=i,
+            shape="circle",
+            color="blue",
+            x=pos[i][0],
+            y=pos[i][1],
+            physics=True,
+        )
     n_g.add_node(dka.start_state, color="red")
     n_g.add_node(dka.end_state, color="red")
     columns = {}
@@ -88,16 +89,17 @@ def generate_graph(dka: DKA, path: str):
     labels = get_labels(dka.dt)
     for i in dka.dt.index:
         for j, m in dka.dt.loc[i].to_dict().items():
-            n_g.add_edge(i,
-                        m,
-                        label=",".join(labels[(i, m)]),
-                        physics=False,
-                        )
+            n_g.add_edge(
+                i,
+                m,
+                label=",".join(labels[(i, m)]),
+                physics=False,
+            )
 
-    if pyvis._version.__version__ > '0.1.9':
+    if pyvis._version.__version__ > "0.1.9":
         nt.from_nx(n_g, show_edge_weights=False)
     else:
         nt.from_nx(n_g)
-    nt.show_buttons(filter_=['physics'])
+    nt.show_buttons(filter_=["physics"])
     nt.show_buttons()
     nt.save_graph(path)

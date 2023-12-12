@@ -1,5 +1,4 @@
 import os
-from dataclasses import dataclass
 
 import pandas as pd
 from PyQt5 import QtCore
@@ -9,7 +8,6 @@ from models.DataFrameModel import DataFrameModel
 
 
 class TableView(QWidget):
-
     def __init__(self, parent=None):
         super(QWidget, self).__init__(parent)
         self.table_model: DataFrameModel | None = None

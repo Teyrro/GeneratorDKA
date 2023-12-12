@@ -2,21 +2,19 @@ from PyQt5.QtCore import QObject
 from pandas import DataFrame
 
 
-def get_compute_multi():
-    return (lambda *argc: ((argc[0] + argc[1]) % argc[2]) * argc[3] + 1,
-            lambda *argc: ((argc[0] + 1 + argc[1]) % argc[2]) * argc[3])
+def get_compute_multi_branch():
+    return (
+        lambda *argc: ((argc[0] + argc[1]) % argc[2]) * argc[3] + 1,
+        lambda *argc: ((argc[0] + 1 + argc[1]) % argc[2]) * argc[3],
+    )
 
 
-def get_compute_one():
-    return (lambda *argc: 1,
-            lambda *argc: 0)
+def get_compute_one_branch():
+    return lambda *argc: 1, lambda *argc: 0
 
 
 def get_compute_func(m):
-    m_funcs = {
-        "one": get_compute_one,
-        "multi": get_compute_multi
-    }
+    m_funcs = {"one": get_compute_one_branch, "multi": get_compute_multi_branch}
     return m_funcs[m]()
 
 
@@ -32,6 +30,9 @@ class DKA(QObject):
 
     def __init__(self, parent, access_sym=None, subchain=None, multiplicity=None):
         super().__init__(parent)
+        self.multiplicity = None
+        self.subchain = None
+        self.access_sym = None
         self.set_info(access_sym, subchain, multiplicity)
         self.m_name: str | None = None
         self.start_state: str | None = None
@@ -48,7 +49,8 @@ class DKA(QObject):
         """
         self.access_sym: str | None = symbols
         self.subchain: str | None = subchain
-        self.multiplicity: int | None = int(multiplicity)
+        if multiplicity is not None:
+            self.multiplicity: int | None = int(multiplicity)
         if self.multiplicity == 1:
             self.m_name = "one"
             return
@@ -81,6 +83,7 @@ class DKA(QObject):
         :param mult:
         :return: DataFrame
         """
+
         def count_state(m, subchain_size):
             l: list[int] = []
             if m == 0:
@@ -104,7 +107,9 @@ class DKA(QObject):
 
     def create_dka(self) -> None:
         """
-        Generate dka. In loop generate branches, every iteration is branch
+        Generate dka
+
+        In loop generate branches, every iteration is branch
         with nodes count == max(subchain_size, mult)
         (iteration count == len(multiplicity))
 
@@ -119,9 +124,11 @@ class DKA(QObject):
 
         subchain_size = len(self.subchain)
         branch_size = max(subchain_size, mult)
-        print(f"branch_size: {branch_size}\n"
-              f"subchain_size: {subchain_size}\n"
-              f"mult: {mult}")
+        print(
+            f"branch_size: {branch_size}\n"
+            f"subchain_size: {subchain_size}\n"
+            f"mult: {mult}"
+        )
         self.generate_background_part(dt, name, mult)
         if subchain_size == 0:
             self.start_state = name + str(-1)
@@ -137,11 +144,19 @@ class DKA(QObject):
         print(dt)
         self._dt = dt
 
-    def generate_other_ways(self, dt: DataFrame, name: str, num_branch: int,
-                            subchain_size: int, branch_size: int) -> None:
+    def generate_other_ways(
+        self,
+        dt: DataFrame,
+        name: str,
+        num_branch: int,
+        subchain_size: int,
+        branch_size: int,
+    ) -> None:
         """
         Other ways are computed depends on number in branch % subchain * branch_size
-        almost to all case. If current char isn't first in subchain, example above suit us
+        almost to all case.
+
+        If current char isn't first in subchain, example above suit us
         other functions in \'get_compute_one\', \'get_compute_multi\'
         :param dt:
         :param name:
@@ -165,13 +180,24 @@ class DKA(QObject):
                     ind = get_ind(i, num_branch, self.multiplicity, subchain_size)
                     ss = state_name
                     es = name + str(ind)
-                    print(f"start_state: {state_name} to: {es}\n"
-                          f"i: {i}, num_branch: {num_branch}, branch: {branch_size}, subchain: {subchain_size}"
-                          f"ind: {ind}")
+                    print(
+                        f"start_state: {state_name} to: {es}\n"
+                        f"i: {i}, "
+                        f"num_branch: {num_branch}, "
+                        f"branch: {branch_size}, "
+                        f"subchain: {subchain_size}"
+                        f"ind: {ind}"
+                    )
                     add_edge(dt, ss, es, cur_char)
 
-    def generate_subchain_part(self, dt: DataFrame, number_branch: int,
-                               offset: int, name: str, subchain_size: int) -> None:
+    def generate_subchain_part(
+        self,
+        dt: DataFrame,
+        number_branch: int,
+        offset: int,
+        name: str,
+        subchain_size: int,
+    ) -> None:
         """
         Generates relates between nodes of subchain, only main relates.
         Offset == subchain size * number branch

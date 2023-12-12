@@ -1,9 +1,16 @@
-
-
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QKeyEvent
-from PyQt5.QtWidgets import QWidget, QLineEdit, QFormLayout, QVBoxLayout, QLabel, QPushButton, QFileDialog, QMessageBox
+from PyQt5.QtWidgets import (
+    QWidget,
+    QLineEdit,
+    QFormLayout,
+    QVBoxLayout,
+    QLabel,
+    QPushButton,
+    QFileDialog,
+    QMessageBox,
+)
 from AddWidget import create_line
 
 
@@ -17,7 +24,6 @@ class InputView(QWidget):
                 super().keyPressEvent(e)
 
     class NecessaryChain(QLineEdit):
-
         def __init__(self, parent=None):
             super().__init__(parent)
 
@@ -27,7 +33,6 @@ class InputView(QWidget):
                 super().keyPressEvent(a0)
 
     class Multiplicity(QLineEdit):
-
         def __init__(self, parent=None):
             super().__init__(parent)
 
@@ -42,7 +47,9 @@ class InputView(QWidget):
         main_lay.addWidget(QLabel("Alphabet"))
         lay: QFormLayout = QFormLayout()
         create_line(lay, self.EditLine(), "symb", "available symbols:", r"\w+")
-        create_line(lay, self.NecessaryChain(), "subchain", "Necessary subchain:", r"\w+")
+        create_line(
+            lay, self.NecessaryChain(), "subchain", "Necessary subchain:", r"\w+"
+        )
         create_line(lay, self.Multiplicity(), "mult", "Multiplicity:", "IntV")
         main_lay.addLayout(lay)
         self.input_info = QLabel()
@@ -68,11 +75,13 @@ class InputView(QWidget):
         msg = QMessageBox()
         msg.setWindowTitle("Information MessageBox")
         if dka.dt is None:
-            msg.setText('Заполните поле начального состояния')
+            msg.setText("Заполните поле начального состояния")
             msg.exec()
             return
-        filename, _ = QFileDialog.getSaveFileName(None, "Save File", ".", "Text Files (*.csv);;All Files (*)")
-        if filename == '':
+        filename, _ = QFileDialog.getSaveFileName(
+            None, "Save File", ".", "Text Files (*.csv);;All Files (*)"
+        )
+        if filename == "":
             return
         dka.dt.to_csv(filename, index=True, sep=";")
 

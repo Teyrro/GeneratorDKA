@@ -1,11 +1,20 @@
-import itertools
 import sys
 from dataclasses import dataclass
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import QSize, Qt, QObject, pyqtSignal, QThread, QFile, QTextStream
-from PyQt5.QtWidgets import QMainWindow, QApplication, QLineEdit, QWidget, QPushButton, \
-    QHBoxLayout, QTabWidget, QVBoxLayout, QLabel, QFormLayout
+from PyQt5.QtWidgets import (
+    QMainWindow,
+    QApplication,
+    QLineEdit,
+    QWidget,
+    QPushButton,
+    QHBoxLayout,
+    QTabWidget,
+    QVBoxLayout,
+    QLabel,
+    QFormLayout,
+)
 
 from AddWidget import create_line
 from CheckChains import CheckChains
@@ -17,7 +26,6 @@ from models.DataFrameModel import DataFrameModel
 
 
 class MainWidget(QWidget):
-
     def __init__(self):
         super().__init__()
         self.worker = None
@@ -128,9 +136,7 @@ class MainWidget(QWidget):
         button: QPushButton = self.input.findChild(QPushButton, "setup")
         # Final resets
         button.setEnabled(False)
-        self.thread.finished.connect(
-            lambda: button.setEnabled(True)
-        )
+        self.thread.finished.connect(lambda: button.setEnabled(True))
 
         # info: QLabel = self.input.findChild(QLabel, "log_dka")
         # info.setText("dka generation")
@@ -155,7 +161,6 @@ class MainWidget(QWidget):
 
 @dataclass
 class MainWindow(QMainWindow):
-
     def __init__(self):
         super().__init__()
         self.setWindowTitle("DKA App")

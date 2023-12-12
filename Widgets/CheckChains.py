@@ -1,11 +1,8 @@
-from dataclasses import dataclass, field
-
 from PyQt5.QtWidgets import QWidget, QListWidget, QVBoxLayout
 from models.DKA import DKA
 
 
 class CheckChains(QWidget):
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.dka: DKA | None = None
@@ -32,8 +29,11 @@ class CheckChains(QWidget):
                 item = f"{current_state} {chain[ind:]}"
                 self.list.addItem(item)
             except BaseException:
-                return (f"current state: {current_state} don't "
-                        f"contain transition - ({current_state},{char}) -> ())", "color: red")
+                return (
+                    f"current state: {current_state} don't "
+                    f"contain transition - ({current_state},{char}) -> ())",
+                    "color: red",
+                )
         else:
             subchain = f"({current_state},_)"
             chains.append(subchain)
@@ -41,6 +41,10 @@ class CheckChains(QWidget):
             self.list.addItem(item)
             self.list.addItem("->".join(chains))
         if current_state != self.dka.end_state:
-            return (f"current state {current_state} isn't final, final state: {self.dka.end_state},"
-                    f" no transition to next state", "color: red")
-        return f"this chain belong to DKA", "color: green"
+            return (
+                f"current state {current_state} isn't final, "
+                f"final state: {self.dka.end_state},"
+                " no transition to next state",
+                "color: red",
+            )
+        return "this chain belong to DKA", "color: green"

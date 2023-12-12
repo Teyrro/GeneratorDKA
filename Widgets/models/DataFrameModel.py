@@ -1,4 +1,3 @@
-
 import pandas as pd
 from PyQt5.QtCore import QAbstractTableModel, Qt, pyqtProperty
 from PyQt5 import QtCore
@@ -26,8 +25,12 @@ class DataFrameModel(QAbstractTableModel):
     dataFrame = pyqtProperty(pd.DataFrame, fget=dataFrame, fset=setDataFrame)
 
     @QtCore.pyqtSlot(int, Qt.Orientation, result=str)
-    def headerData(self, section: int, orientation: Qt.Orientation,
-                   role: int = Qt.ItemDataRole.DisplayRole):
+    def headerData(
+        self,
+        section: int,
+        orientation: Qt.Orientation,
+        role: int = Qt.ItemDataRole.DisplayRole,
+    ):
         if role == Qt.ItemDataRole.DisplayRole:
             if orientation == Qt.Orientation.Horizontal:
                 return self._dataframe.columns[section]
@@ -46,8 +49,10 @@ class DataFrameModel(QAbstractTableModel):
         return self._dataframe.columns.size
 
     def data(self, index, role=Qt.ItemDataRole.DisplayRole):
-        if not index.isValid() or not (0 <= index.row() < self.rowCount()
-                                       and 0 <= index.column() < self.columnCount()):
+        if not index.isValid() or not (
+            0 <= index.row() < self.rowCount()
+            and 0 <= index.column() < self.columnCount()
+        ):
             return QtCore.QVariant()
         row = self._dataframe.index[index.row()]
         col = self._dataframe.columns[index.column()]
@@ -64,15 +69,17 @@ class DataFrameModel(QAbstractTableModel):
 
     def roleNames(self):
         roles = {
-            QtCore.Qt.ItemDataRole.DisplayRole: b'display',
-            DataFrameModel.DtypeRole: b'dtype',
-            DataFrameModel.ValueRole: b'value'
+            QtCore.Qt.ItemDataRole.DisplayRole: b"display",
+            DataFrameModel.DtypeRole: b"dtype",
+            DataFrameModel.ValueRole: b"value",
         }
         return roles
 
     def sort(self, column, order=...):
         col_name = self._dataframe.columns.tolist()[column]
         self.layoutAboutToBeChanged.emit()
-        self._dataframe.sort_values(col_name, ascending=order == Qt.SortOrder.AscendingOrder, inplace=True)
+        self._dataframe.sort_values(
+            col_name, ascending=order == Qt.SortOrder.AscendingOrder, inplace=True
+        )
         self._dataframe.reset_index(inplace=True, drop=True)
         self.layoutChanged.emit()
