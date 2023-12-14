@@ -21,7 +21,7 @@ from CheckChains import CheckChains
 from GraphView import GraphView
 from InputView import InputView
 from TableView import TableView
-from models.DKA import DKA
+from models.dka import DKA
 from models.DataFrameModel import DataFrameModel
 
 

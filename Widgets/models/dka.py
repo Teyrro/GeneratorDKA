@@ -2,14 +2,14 @@ from PyQt5.QtCore import QObject
 from pandas import DataFrame
 
 
-def get_compute_multi_branch():
+def get_compute_multi_branch() -> tuple:
     return (
         lambda *argc: ((argc[0] + argc[1]) % argc[2]) * argc[3] + 1,
         lambda *argc: ((argc[0] + 1 + argc[1]) % argc[2]) * argc[3],
     )
 
 
-def get_compute_one_branch():
+def get_compute_one_branch() -> tuple:
     return lambda *argc: 1, lambda *argc: 0
 
 
@@ -33,8 +33,9 @@ class DKA(QObject):
         self.multiplicity = None
         self.subchain = None
         self.access_sym = None
-        self.set_info(access_sym, subchain, multiplicity)
         self.m_name: str | None = None
+        self.set_info(access_sym, subchain, multiplicity)
+
         self.start_state: str | None = None
         self.end_state: str | None = None
         self._dt: DataFrame | None = None
@@ -47,14 +48,14 @@ class DKA(QObject):
         :param multiplicity:
         :return: None
         """
-        self.access_sym: str | None = symbols
-        self.subchain: str | None = subchain
-        if multiplicity is not None:
-            self.multiplicity: int | None = int(multiplicity)
+        self.access_sym = symbols
+        self.subchain = subchain
+        if multiplicity is not None and multiplicity != 0:
+            self.multiplicity = int(multiplicity)
         if self.multiplicity == 1:
             self.m_name = "one"
-            return
-        self.m_name = "multi"
+        else:
+            self.m_name = "multi"
 
     def generate_background_part(self, dt: DataFrame, name: str, mult: int) -> None:
         """
@@ -84,25 +85,17 @@ class DKA(QObject):
         :return: DataFrame
         """
 
-        def count_state(m, subchain_size):
-            l: list[int] = []
-            if m == 0:
-                return [0]
-            for _ in range(0, m):
-                l.append(subchain_size)
-            return l
-
-        state_count = count_state(mult, len(self.subchain))
         states: list[str] = []
-        # if len(state_count) > 1:
         for i in range(-1, -mult - 1, -1):
             states.append(name_state + str(i))
+
+        subchain_size = len(self.subchain)
         start_pos = end_pos = 0
-        for i in state_count:
-            end_pos += i
+        for i in range(mult):
+            end_pos += subchain_size
             for j in range(start_pos, end_pos):
                 states.append(name_state + str(j))
-            start_pos += i
+            start_pos += subchain_size
         return DataFrame("", states, list(self.access_sym))
 
     def create_dka(self) -> None:
@@ -119,16 +112,10 @@ class DKA(QObject):
 
         mult: int = int(self.multiplicity)
         dt = self.create_dt(name, mult)
-        # print(dt)
-        # print(dt.info())
 
         subchain_size = len(self.subchain)
-        branch_size = max(subchain_size, mult)
-        print(
-            f"branch_size: {branch_size}\n"
-            f"subchain_size: {subchain_size}\n"
-            f"mult: {mult}"
-        )
+        # branch_size = max(subchain_size, mult)
+
         self.generate_background_part(dt, name, mult)
         if subchain_size == 0:
             self.start_state = name + str(-1)
@@ -139,9 +126,9 @@ class DKA(QObject):
         for num_branch in range(mult):
             offset = num_branch * subchain_size
             self.generate_subchain_part(dt, num_branch, offset, name, subchain_size)
-            self.generate_other_ways(dt, name, num_branch, subchain_size, branch_size)
+            self.generate_other_ways(dt, name, num_branch, subchain_size)
 
-        print(dt)
+        # print(dt)
         self._dt = dt
 
     def generate_other_ways(
@@ -150,7 +137,6 @@ class DKA(QObject):
         name: str,
         num_branch: int,
         subchain_size: int,
-        branch_size: int,
     ) -> None:
         """
         Other ways are computed depends on number in branch % subchain * branch_size
@@ -162,7 +148,6 @@ class DKA(QObject):
         :param name:
         :param num_branch:
         :param subchain_size:
-        :param branch_size:
         :return:  None
         """
         if subchain_size == 0:
@@ -180,14 +165,6 @@ class DKA(QObject):
                     ind = get_ind(i, num_branch, self.multiplicity, subchain_size)
                     ss = state_name
                     es = name + str(ind)
-                    print(
-                        f"start_state: {state_name} to: {es}\n"
-                        f"i: {i}, "
-                        f"num_branch: {num_branch}, "
-                        f"branch: {branch_size}, "
-                        f"subchain: {subchain_size}"
-                        f"ind: {ind}"
-                    )
                     add_edge(dt, ss, es, cur_char)
 
     def generate_subchain_part(
