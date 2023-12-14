@@ -9,7 +9,7 @@ from pyvis.network import Network
 import pyvis._version
 import networkx as nx
 
-from models.DKA import DKA
+from models.dka import DKA
 
 
 class GraphView(QWidget):

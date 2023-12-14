@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QListWidget, QVBoxLayout
-from models.DKA import DKA
+from models.dka import DKA
 
 
 class CheckChains(QWidget):

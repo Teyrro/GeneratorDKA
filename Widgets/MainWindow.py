@@ -21,7 +21,7 @@ from CheckChains import CheckChains
 from GraphView import GraphView
 from InputView import InputView
 from TableView import TableView
-from models.DKA import DKA
+from models.dka import DKA
 from models.DataFrameModel import DataFrameModel
 
 
@@ -170,10 +170,6 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    file = QFile(":/dark.qss")
-    file.open(QFile.ReadOnly | QFile.Text)
-    stream = QTextStream(file)
-    app.setStyleSheet(stream.readAll())
     window = MainWindow()
     window.show()
     app.exec()

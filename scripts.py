@@ -1,9 +1,7 @@
-import pathlib
 import subprocess
-from enum import Enum
-import sys
+import Widgets
 
-DEV_MODULES = ["flake8 Widgets", "black Widgets", "mypy Widgets"]
+DEV_MODULES = ["flake8 Widgets", "black Widgets", "mypy Widgets", "pytest"]
 
 
 def all_check():
